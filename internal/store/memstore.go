@@ -7,11 +7,12 @@ import (
 )
 
 type MemStore struct {
-	mu       sync.RWMutex
-	incident models.Incident
-	evidence []models.Evidence
-	findings []models.Finding
-	journal  []models.JournalEvent
+	mu          sync.RWMutex
+	incident    models.Incident
+	evidence    []models.Evidence
+	findings    []models.Finding
+	journal     []models.JournalEvent
+	maxEvidence int
 }
 
 func NewMemStore() *MemStore {
@@ -79,12 +80,26 @@ func (s *MemStore) Findings() []models.Finding {
 func (s *MemStore) EvidenceLimited(n int) []models.Evidence {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	if n <= 0 || n >= len(s.evidence) {
 		out := make([]models.Evidence, len(s.evidence))
 		copy(out, s.evidence)
 		return out
 	}
+
 	out := make([]models.Evidence, n)
 	copy(out, s.evidence[:n])
 	return out
+}
+
+func (s *MemStore) SetMaxEvidence(n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.maxEvidence = n
+}
+
+func (s *MemStore) MaxEvidence() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.maxEvidence
 }

@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/ramakanth98/incident-forge/internal/agents"
@@ -12,17 +13,25 @@ import (
 	"github.com/ramakanth98/incident-forge/internal/store"
 )
 
-func RunInvestigate(bundlePath string) error {
+func RunInvestigate(bundlePath string, budgets Budgets, outDir string) error {
+	budgets = budgets.WithDefaults()
+	if outDir == "" {
+		outDir = filepath.Join(bundlePath, "out")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	st := store.NewMemStore()
 
+	// Load incident bundle
 	loader := connectors.NewBundleLoader()
+
 	inc, err := loader.LoadIncident(bundlePath)
 	if err != nil {
 		return err
 	}
+
 	ev, err := loader.LoadEvidence(bundlePath)
 	if err != nil {
 		return err
@@ -30,7 +39,9 @@ func RunInvestigate(bundlePath string) error {
 
 	st.PutIncident(inc)
 	st.AddEvidence(ev...)
+	st.SetMaxEvidence(budgets.MaxEvidencePerAgent)
 
+	// Agents to run
 	agentList := []agents.Agent{
 		&agents.ChangeCorrelationAgent{},
 		&agents.MetricsAnomalyAgent{},
@@ -44,24 +55,24 @@ func RunInvestigate(bundlePath string) error {
 
 	results := make(chan agentResult, len(agentList))
 
+	// Fan-out
 	for _, ag := range agentList {
 		ag := ag
 		go func() {
 			start := time.Now()
-			durMs := time.Since(start).Milliseconds()
 			st.AddJournal(models.JournalEvent{
-				Timestamp:  start,
-				Type:       models.JournalAgent,
-				Message:    "agent started",
-				Agent:      ag.Name(),
-				DurationMs: durMs,
+				Timestamp: start,
+				Type:      models.JournalAgent,
+				Message:   "agent started",
+				Agent:     ag.Name(),
 			})
 
 			err := ag.Run(ctx, st)
 
 			end := time.Now()
+			durMs := time.Since(start).Milliseconds()
+
 			if err != nil {
-				durMs := time.Since(start).Milliseconds()
 				st.AddJournal(models.JournalEvent{
 					Timestamp:  end,
 					Type:       models.JournalError,
@@ -70,7 +81,6 @@ func RunInvestigate(bundlePath string) error {
 					DurationMs: durMs,
 				})
 			} else {
-				durMs := time.Since(start).Milliseconds()
 				st.AddJournal(models.JournalEvent{
 					Timestamp:  end,
 					Type:       models.JournalAgent,
@@ -84,6 +94,7 @@ func RunInvestigate(bundlePath string) error {
 		}()
 	}
 
+	// Fan-in
 	for i := 0; i < len(agentList); i++ {
 		r := <-results
 		if r.err != nil {
@@ -91,7 +102,14 @@ func RunInvestigate(bundlePath string) error {
 		}
 	}
 
-	outPath, err := report.WriteMarkdown(bundlePath, st.Incident(), st.Evidence(), st.Findings(), st.Journal())
+	// Write report
+	outPath, err := report.WriteMarkdown(
+		outDir,
+		st.Incident(),
+		st.Evidence(),
+		st.Findings(),
+		st.Journal(),
+	)
 	if err != nil {
 		return err
 	}

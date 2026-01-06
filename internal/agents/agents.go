@@ -12,6 +12,7 @@ type Store interface {
 	AddFindings(...models.Finding)
 	AddJournal(...models.JournalEvent)
 	EvidenceLimited(n int) []models.Evidence
+	MaxEvidence() int
 }
 
 type Agent interface {
