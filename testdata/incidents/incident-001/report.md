@@ -10,6 +10,26 @@
 
 ## Findings
 
+### Metric anomalies in incident window (0.80)
+
+- **Agent:** metrics-anomaly
+
+Top anomalies:
+- checkout-api http_server_latency_p95_ms: +991% (220 → 2400)
+
+**Evidence:**
+- `met-001` [metric/checkout-api] p95 latency jumped from 220ms to 2.4s
+
+### High-signal log entries (0.75)
+
+- **Agent:** log-signal
+
+Top log signals:
+- checkout-api (18:13:10Z) score=5: Timeout calling payments-service; retrying
+
+**Evidence:**
+- `log-001` [log/checkout-api] Timeout calling payments-service; retrying
+
 ### Changes near incident start (0.75)
 
 - **Agent:** change-correlation

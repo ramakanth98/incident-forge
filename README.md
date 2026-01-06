@@ -1,6 +1,6 @@
-# incident-forge
+# Incident-forge
 
-incident-forge is a lightweight incident investigation engine that ingests
+Incident-forge is a lightweight incident investigation engine that ingests
 telemetry bundles (logs, metrics, change events) and produces an evidence-backed
 incident report.
 
@@ -20,3 +20,4 @@ This project is intentionally CLI-first and connector-agnostic.
 ## Usage
 ```bash
 go run ./cmd/forge investigate ./testdata/incidents/incident-001
+

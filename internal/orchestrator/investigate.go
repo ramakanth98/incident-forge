@@ -30,14 +30,31 @@ func RunInvestigate(bundlePath string) error {
 	st.PutIncident(inc)
 	st.AddEvidence(ev...)
 
-	// Agents run sequentially first (simple). We'll make this concurrent next.
 	agentList := []agents.Agent{
 		&agents.ChangeCorrelationAgent{},
+		&agents.MetricsAnomalyAgent{},
+		&agents.LogSignalAgent{},
 	}
 
+	type agentResult struct {
+		name string
+		err  error
+	}
+
+	results := make(chan agentResult, len(agentList))
+
 	for _, ag := range agentList {
-		if err := ag.Run(ctx, st); err != nil {
-			return fmt.Errorf("%s failed: %w", ag.Name(), err)
+		ag := ag // capture loop variable
+		go func() {
+			err := ag.Run(ctx, st)
+			results <- agentResult{name: ag.Name(), err: err}
+		}()
+	}
+
+	for i := 0; i < len(agentList); i++ {
+		r := <-results
+		if r.err != nil {
+			return fmt.Errorf("%s failed: %w", r.name, r.err)
 		}
 	}
 
