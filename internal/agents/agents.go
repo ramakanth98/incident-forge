@@ -10,6 +10,8 @@ type Store interface {
 	Incident() models.Incident
 	Evidence() []models.Evidence
 	AddFindings(...models.Finding)
+	AddJournal(...models.JournalEvent)
+	EvidenceLimited(n int) []models.Evidence
 }
 
 type Agent interface {

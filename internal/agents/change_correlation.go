@@ -15,7 +15,7 @@ func (a *ChangeCorrelationAgent) Name() string { return "change-correlation" }
 
 func (a *ChangeCorrelationAgent) Run(ctx context.Context, s Store) error {
 	inc := s.Incident()
-	ev := s.Evidence()
+	ev := s.EvidenceLimited(500)
 
 	// Pick change events near incident start, rank by closeness.
 	type scored struct {

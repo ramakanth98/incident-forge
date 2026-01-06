@@ -34,3 +34,21 @@ type Finding struct {
 	EvidenceIDs []string `json:"evidence_ids"`
 	Confidence  float64  `json:"confidence"` // 0..1
 }
+
+type JournalEventType string
+
+const (
+	JournalInfo  JournalEventType = "info"
+	JournalAgent JournalEventType = "agent"
+	JournalError JournalEventType = "error"
+)
+
+type JournalEvent struct {
+	Timestamp time.Time        `json:"timestamp"`
+	Type      JournalEventType `json:"type"`
+	Message   string           `json:"message"`
+
+	// Optional fields
+	Agent      string `json:"agent,omitempty"`
+	DurationMs int64  `json:"duration_ms,omitempty"`
+}

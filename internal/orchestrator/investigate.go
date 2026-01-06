@@ -7,6 +7,7 @@ import (
 
 	"github.com/ramakanth98/incident-forge/internal/agents"
 	"github.com/ramakanth98/incident-forge/internal/connectors"
+	"github.com/ramakanth98/incident-forge/internal/models"
 	"github.com/ramakanth98/incident-forge/internal/report"
 	"github.com/ramakanth98/incident-forge/internal/store"
 )
@@ -44,9 +45,41 @@ func RunInvestigate(bundlePath string) error {
 	results := make(chan agentResult, len(agentList))
 
 	for _, ag := range agentList {
-		ag := ag // capture loop variable
+		ag := ag
 		go func() {
+			start := time.Now()
+			durMs := time.Since(start).Milliseconds()
+			st.AddJournal(models.JournalEvent{
+				Timestamp:  start,
+				Type:       models.JournalAgent,
+				Message:    "agent started",
+				Agent:      ag.Name(),
+				DurationMs: durMs,
+			})
+
 			err := ag.Run(ctx, st)
+
+			end := time.Now()
+			if err != nil {
+				durMs := time.Since(start).Milliseconds()
+				st.AddJournal(models.JournalEvent{
+					Timestamp:  end,
+					Type:       models.JournalError,
+					Message:    err.Error(),
+					Agent:      ag.Name(),
+					DurationMs: durMs,
+				})
+			} else {
+				durMs := time.Since(start).Milliseconds()
+				st.AddJournal(models.JournalEvent{
+					Timestamp:  end,
+					Type:       models.JournalAgent,
+					Message:    "agent finished",
+					Agent:      ag.Name(),
+					DurationMs: durMs,
+				})
+			}
+
 			results <- agentResult{name: ag.Name(), err: err}
 		}()
 	}
@@ -58,7 +91,7 @@ func RunInvestigate(bundlePath string) error {
 		}
 	}
 
-	outPath, err := report.WriteMarkdown(bundlePath, st.Incident(), st.Evidence(), st.Findings())
+	outPath, err := report.WriteMarkdown(bundlePath, st.Incident(), st.Evidence(), st.Findings(), st.Journal())
 	if err != nil {
 		return err
 	}

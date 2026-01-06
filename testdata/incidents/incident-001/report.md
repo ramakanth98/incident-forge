@@ -8,6 +8,15 @@
 
 **Services:** checkout-api, payments-worker
 
+## Investigation Journal
+
+- 14:43:28Z [agent] agent started (log-signal)
+- 14:43:28Z [agent] agent started (change-correlation)
+- 14:43:28Z [agent] agent finished (log-signal, 0ms)
+- 14:43:28Z [agent] agent finished (change-correlation, 0ms)
+- 14:43:28Z [agent] agent started (metrics-anomaly)
+- 14:43:28Z [agent] agent finished (metrics-anomaly, 0ms)
+
 ## Findings
 
 ### Metric anomalies in incident window (0.80)

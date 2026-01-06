@@ -15,7 +15,7 @@ func (a *LogSignalAgent) Name() string { return "log-signal" }
 
 func (a *LogSignalAgent) Run(ctx context.Context, s Store) error {
 	inc := s.Incident()
-	ev := s.Evidence()
+	ev := s.EvidenceLimited(500)
 
 	keywords := []string{
 		"timeout", "timed out",

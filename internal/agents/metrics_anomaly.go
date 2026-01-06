@@ -15,7 +15,7 @@ func (a *MetricsAnomalyAgent) Name() string { return "metrics-anomaly" }
 
 func (a *MetricsAnomalyAgent) Run(ctx context.Context, s Store) error {
 	inc := s.Incident()
-	ev := s.Evidence()
+	ev := s.EvidenceLimited(500)
 
 	type metricHit struct {
 		e   models.Evidence
