@@ -1,0 +1,15 @@
+# Go build artifacts
+/bin/
+/dist/
+*.exe
+*.test
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Output
+/out/

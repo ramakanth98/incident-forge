@@ -1,0 +1,8 @@
+{
+    "id": "incident-001",
+    "title": "Checkout API latency spike after deploy",
+    "start_time": "2026-01-05T18:10:00Z",
+    "end_time": "2026-01-05T18:40:00Z",
+    "services": ["checkout-api", "payments-worker"]
+  }
+  
